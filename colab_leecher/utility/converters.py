@@ -83,14 +83,14 @@ async def videoConverter(file: str):
     elif not ospath.exists(out_file):
         Err = True
 
-    if Err:
-        proc = Thread(target=convert_to_mp4, name="Moviepy", args=(file, out_file))
-        proc.start()
-        core = "CPU"
-        while proc.is_alive():  # Until ytdl is downloading
-            await msg_updater(c, "2nd", "Moviepy 🛵")
-            c = (c + 1) % 12
-            await sleep(3)
+   # if Err:
+     #   proc = Thread(target=convert_to_mp4, name="Moviepy", args=(file, out_file))
+      #  proc.start()
+      #  core = "CPU"
+       # while proc.is_alive():  # Until ytdl is downloading
+         #   await msg_updater(c, "2nd", "Moviepy 🛵")
+          #  c = (c + 1) % 12
+          #  await sleep(3)
 
     if ospath.exists(out_file) and getSize(out_file) == 0:
         os.remove(out_file)
