@@ -10,7 +10,8 @@ opencv-python
 Pillow
 psutil
 pytz
-pyroblack
+#pyroblack
+git+https://github.com/KurimuzonAkuma/pyrogram.git
 requests
 tgcrypto
 uvloop
