@@ -4,8 +4,8 @@ from asyncio import sleep
 from threading import Thread
 from os import makedirs, path as ospath
 from colab_leecher.utility.handler import cancelTask
-from colab_leecher.utility.variables import YTDL, MSG, Messages, Paths
-from colab_leecher.utility.helper import getTime, keyboard, sizeUnit, status_bar, sysINFO
+from colab_leecher.utility.variables import YTDL, MSG, Messages, Paths, Transfer, BOT, BotTimes
+from colab_leecher.utility.helper import getTime, keyboard, sizeUnit, status_bar, sysINFO, fileType, thumbMaintainer, videoExtFix
 
 async def YTDL_Status(link, num):
     global Messages, YTDL
@@ -39,6 +39,11 @@ async def YTDL_Status(link, num):
 
         await sleep(2.5)
 
+    # After download completes, upload the file
+    downloaded_file_path = YTDL.final_file_path
+    real_name = YTDL.real_name
+    await upload_file(downloaded_file_path, real_name)
+
 class MyLogger:
     def __init__(self):
         pass
@@ -55,8 +60,6 @@ class MyLogger:
 
     @staticmethod
     def error(msg):
-        # if msg != "ERROR: Cancelling...":
-        # print(msg)
         pass
 
 def YouTubeDL(url):
@@ -83,9 +86,10 @@ def YouTubeDL(url):
             YTDL.left = sizeUnit(total_bytes) if total_bytes else "N/A"
 
         elif d["status"] == "downloading fragment":
-            # log_str = d["message"]
-            # print(log_str, end="")
             pass
+        elif d["status"] == "finished":
+            YTDL.final_file_path = d["filename"]
+            YTDL.real_name = ospath.basename(d["filename"])
         else:
             logging.info(d)
 
@@ -94,13 +98,13 @@ def YouTubeDL(url):
         "allow_multiple_video_streams": True,
         "allow_multiple_audio_streams": True,
         "writethumbnail": True,
-        "--concurrent-fragments": 4 , # Set the maximum number of concurrent fragments
+        "--concurrent-fragments": 4,
         "allow_playlist_files": True,
         "overwrites": True,
         "postprocessors": [{"key": "FFmpegVideoConvertor", "preferedformat": "mp4"}],
         "progress_hooks": [my_hook],
-        "writesubtitles": "srt",  # Enable subtitles download
-        "extractor_args": {"subtitlesformat": "srt"},  # Extract subtitles in SRT format
+        "writesubtitles": "srt",
+        "extractor_args": {"subtitlesformat": "srt"},
         "logger": MyLogger(),
     }
 
@@ -111,7 +115,7 @@ def YouTubeDL(url):
             info_dict = ydl.extract_info(url, download=False)
             YTDL.header = "⌛ __Please WAIT a bit...__"
             if "_type" in info_dict and info_dict["_type"] == "playlist":
-                playlist_name = info_dict["title"] 
+                playlist_name = info_dict["title"]
                 if not ospath.exists(ospath.join(Paths.down_path, playlist_name)):
                     makedirs(ospath.join(Paths.down_path, playlist_name))
                 ydl_opts["outtmpl"] = {
@@ -151,10 +155,105 @@ async def get_YT_Name(link):
     with yt_dlp.YoutubeDL({"logger": MyLogger()}) as ydl:
         try:
             info = ydl.extract_info(link, download=False)
-            if "title" in info and info["title"]: 
+            if "title" in info and info["title"]:
                 return info["title"]
             else:
                 return "UNKNOWN DOWNLOAD NAME"
         except Exception as e:
             await cancelTask(f"Can't Download from this link. Because: {str(e)}")
             return "UNKNOWN DOWNLOAD NAME"
+
+async def progress_bar(current, total):
+    global status_msg, status_head
+    upload_speed = 4 * 1024 * 1024
+    elapsed_time_seconds = (datetime.now() - BotTimes.task_start).seconds
+    if current > 0 and elapsed_time_seconds > 0:
+        upload_speed = current / elapsed_time_seconds
+    eta = (Transfer.total_down_size - current - sum(Transfer.up_bytes)) / upload_speed
+    percentage = (current + sum(Transfer.up_bytes)) / Transfer.total_down_size * 100
+
+    if current % (total // 100) == 0:  # Update every 1% progress
+        await status_bar(
+            down_msg=Messages.status_head,
+            speed=f"{sizeUnit(upload_speed)}/s",
+            percentage=percentage,
+            eta=getTime(eta),
+            done=sizeUnit(current + sum(Transfer.up_bytes)),
+            left=sizeUnit(Transfer.total_down_size),
+            engine="Pyrogram 💥",
+        )
+
+async def upload_file(file_path, real_name):
+    global Transfer, MSG
+    BotTimes.task_start = datetime.now()
+    caption = f"<{BOT.Options.caption}>{BOT.Setting.prefix} {real_name} {BOT.Setting.suffix}</{BOT.Options.caption}>"
+    type_ = fileType(file_path)
+
+    f_type = type_ if BOT.Options.stream_upload else "document"
+
+    # Upload the file
+    try:
+        if f_type == "video":
+            # For Renaming to mp4
+            if not BOT.Options.stream_upload:
+                file_path = videoExtFix(file_path)
+            # Generate Thumbnail and Get Duration
+            thmb_path, seconds = thumbMaintainer(file_path)
+            with Image.open(thmb_path) as img:
+                width, height = img.size
+
+            MSG.sent_msg = await MSG.sent_msg.reply_video(
+                video=file_path,
+                supports_streaming=True,
+                width=width,
+                height=height,
+                caption=caption,
+                thumb=thmb_path,
+                duration=int(seconds),
+                progress=progress_bar,
+                reply_to_message_id=MSG.sent_msg.id,
+            )
+
+        elif f_type == "audio":
+            thmb_path = None if not ospath.exists(Paths.THMB_PATH) else Paths.THMB_PATH
+            MSG.sent_msg = await MSG.sent_msg.reply_audio(
+                audio=file_path,
+                caption=caption,
+                thumb=thmb_path,  # type: ignore
+                progress=progress_bar,
+                reply_to_message_id=MSG.sent_msg.id,
+            )
+
+        elif f_type == "document":
+            if ospath.exists(Paths.THMB_PATH):
+                thmb_path = Paths.THMB_PATH
+            elif type_ == "video":
+                thmb_path, _ = thumbMaintainer(file_path)
+            else:
+                thmb_path = None
+
+            MSG.sent_msg = await MSG.sent_msg.reply_document(
+                document=file_path,
+                caption=caption,
+                thumb=thmb_path,  # type: ignore
+                progress=progress_bar,
+                reply_to_message_id=MSG.sent_msg.id,
+            )
+
+        elif f_type == "photo":
+            MSG.sent_msg = await MSG.sent_msg.reply_photo(
+                photo=file_path,
+                caption=caption,
+                progress=progress_bar,
+                reply_to_message_id=MSG.sent_msg.id,
+            )
+
+        Transfer.sent_file.append(MSG.sent_msg)
+        Transfer.sent_file_names.append(real_name)
+
+    except FloodWait as e:
+        logging.warning(f"FloodWait: {e.x} seconds")
+        await sleep(e.x)
+        await upload_file(file_path, real_name)
+    except Exception as e:
+        logging.error(f"Error When Uploading : {e}")
