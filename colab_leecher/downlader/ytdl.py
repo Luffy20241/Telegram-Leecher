@@ -7,7 +7,6 @@ from colab_leecher.utility.handler import cancelTask
 from colab_leecher.utility.variables import YTDL, MSG, Messages, Paths
 from colab_leecher.utility.helper import getTime, keyboard, sizeUnit, status_bar, sysINFO
 
-
 async def YTDL_Status(link, num):
     global Messages, YTDL
     name = await get_YT_Name(link)
@@ -40,7 +39,6 @@ async def YTDL_Status(link, num):
 
         await sleep(2.5)
 
-
 class MyLogger:
     def __init__(self):
         pass
@@ -60,7 +58,6 @@ class MyLogger:
         # if msg != "ERROR: Cancelling...":
         # print(msg)
         pass
-
 
 def YouTubeDL(url):
     global YTDL
@@ -93,11 +90,11 @@ def YouTubeDL(url):
             logging.info(d)
 
     ydl_opts = {
-        "format": "best[height<=720]",  # Set the format to 720p
+        "format": "bestvideo[height<=720]+bestaudio/best[height<=720]",
         "allow_multiple_video_streams": True,
         "allow_multiple_audio_streams": True,
         "writethumbnail": True,
-        "--concurrent-fragments": 4,  # Set the maximum number of concurrent fragments
+        "--concurrent-fragments": 4 , # Set the maximum number of concurrent fragments
         "allow_playlist_files": True,
         "overwrites": True,
         "postprocessors": [{"key": "FFmpegVideoConvertor", "preferedformat": "mp4"}],
@@ -114,7 +111,7 @@ def YouTubeDL(url):
             info_dict = ydl.extract_info(url, download=False)
             YTDL.header = "⌛ __Please WAIT a bit...__"
             if "_type" in info_dict and info_dict["_type"] == "playlist":
-                playlist_name = info_dict["title"]
+                playlist_name = info_dict["title"] 
                 if not ospath.exists(ospath.join(Paths.down_path, playlist_name)):
                     makedirs(ospath.join(Paths.down_path, playlist_name))
                 ydl_opts["outtmpl"] = {
@@ -150,12 +147,11 @@ def YouTubeDL(url):
         except Exception as e:
             logging.error(f"YTDL ERROR: {e}")
 
-
 async def get_YT_Name(link):
     with yt_dlp.YoutubeDL({"logger": MyLogger()}) as ydl:
         try:
             info = ydl.extract_info(link, download=False)
-            if "title" in info and info["title"]:
+            if "title" in info and info["title"]: 
                 return info["title"]
             else:
                 return "UNKNOWN DOWNLOAD NAME"
