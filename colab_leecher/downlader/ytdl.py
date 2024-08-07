@@ -1,6 +1,3 @@
-# copyright 2023 © Xron Trix | https://github.com/Xrontrix10
-
-
 import logging
 import yt_dlp
 from asyncio import sleep
@@ -96,11 +93,11 @@ def YouTubeDL(url):
             logging.info(d)
 
     ydl_opts = {
-        "format": "best",
+        "format": "best[height<=720]",  # Set the format to 720p
         "allow_multiple_video_streams": True,
         "allow_multiple_audio_streams": True,
         "writethumbnail": True,
-        "--concurrent-fragments": 4 , # Set the maximum number of concurrent fragments
+        "--concurrent-fragments": 4,  # Set the maximum number of concurrent fragments
         "allow_playlist_files": True,
         "overwrites": True,
         "postprocessors": [{"key": "FFmpegVideoConvertor", "preferedformat": "mp4"}],
@@ -117,12 +114,12 @@ def YouTubeDL(url):
             info_dict = ydl.extract_info(url, download=False)
             YTDL.header = "⌛ __Please WAIT a bit...__"
             if "_type" in info_dict and info_dict["_type"] == "playlist":
-                playlist_name = info_dict["title"] 
+                playlist_name = info_dict["title"]
                 if not ospath.exists(ospath.join(Paths.down_path, playlist_name)):
                     makedirs(ospath.join(Paths.down_path, playlist_name))
                 ydl_opts["outtmpl"] = {
                     "default": f"{Paths.down_path}/{playlist_name}/%(title)s.%(ext)s",
-                    "thumbnail": f"{Paths.thumbnail_ytdl}/%(id)s.%(ext)s",
+                    "thumbnail": f"{Paths.thumbnail_ytdl}/%(title)s.%(ext)s",
                 }
                 for entry in info_dict["entries"]:
                     video_url = entry["webpage_url"]
@@ -131,23 +128,23 @@ def YouTubeDL(url):
                     except yt_dlp.utils.DownloadError as e:
                         if e.exc_info[0] == 36:
                             ydl_opts["outtmpl"] = {
-                                "default": f"{Paths.down_path}/%(id)s.%(ext)s",
-                                "thumbnail": f"{Paths.thumbnail_ytdl}/%(id)s.%(ext)s",
+                                "default": f"{Paths.down_path}/%(title)s.%(ext)s",
+                                "thumbnail": f"{Paths.thumbnail_ytdl}/%(title)s.%(ext)s",
                             }
                             ydl.download([video_url])
             else:
                 YTDL.header = ""
                 ydl_opts["outtmpl"] = {
-                    "default": f"{Paths.down_path}/%(id)s.%(ext)s",
-                    "thumbnail": f"{Paths.thumbnail_ytdl}/%(id)s.%(ext)s",
+                    "default": f"{Paths.down_path}/%(title)s.%(ext)s",
+                    "thumbnail": f"{Paths.thumbnail_ytdl}/%(title)s.%(ext)s",
                 }
                 try:
                     ydl.download([url])
                 except yt_dlp.utils.DownloadError as e:
                     if e.exc_info[0] == 36:
                         ydl_opts["outtmpl"] = {
-                            "default": f"{Paths.down_path}/%(id)s.%(ext)s",
-                            "thumbnail": f"{Paths.thumbnail_ytdl}/%(id)s.%(ext)s",
+                            "default": f"{Paths.down_path}/%(title)s.%(ext)s",
+                            "thumbnail": f"{Paths.thumbnail_ytdl}/%(title)s.%(ext)s",
                         }
                         ydl.download([url])
         except Exception as e:
@@ -158,7 +155,7 @@ async def get_YT_Name(link):
     with yt_dlp.YoutubeDL({"logger": MyLogger()}) as ydl:
         try:
             info = ydl.extract_info(link, download=False)
-            if "title" in info and info["title"]: 
+            if "title" in info and info["title"]:
                 return info["title"]
             else:
                 return "UNKNOWN DOWNLOAD NAME"
