@@ -93,7 +93,7 @@ def YouTubeDL(url):
             logging.info(d)
 
     ydl_opts = {
-        "format": "bestvideo[height<=720]+bestaudio/best[height<=720]",  # Set the format to 720p
+        "format": "bestvideo+bestaudio",  # Set the format to 720p
         "allow_multiple_video_streams": True,
         "allow_multiple_audio_streams": True,
         "writethumbnail": True,
