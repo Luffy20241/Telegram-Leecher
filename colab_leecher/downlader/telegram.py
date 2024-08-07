@@ -1,6 +1,3 @@
-# copyright 2023 © Xron Trix | https://github.com/Xrontrix10
-
-
 import logging
 from datetime import datetime
 from os import path as ospath
@@ -9,6 +6,8 @@ from colab_leecher.utility.handler import cancelTask
 from colab_leecher.utility.variables import Transfer, Paths, Messages, BotTimes
 from colab_leecher.utility.helper import speedETA, getTime, sizeUnit, status_bar
 
+# Global variables
+start_time = None
 
 async def media_Identifier(link):
     parts = link.split("/")
@@ -37,23 +36,22 @@ async def media_Identifier(link):
         return
     return media, message
 
-
 async def download_progress(current, total):
     speed_string, eta, percentage = speedETA(start_time, current, total)
 
-    await status_bar(
-        down_msg=Messages.status_head,
-        speed=speed_string,
-        percentage=percentage,
-        eta=getTime(eta),
-        done=sizeUnit(sum(Transfer.down_bytes) + current),
-        left=sizeUnit(Transfer.total_down_size),
-        engine="Pyrogram 💥",
-    )
-
+    if current % (total // 100) == 0:  # Update every 1% progress
+        await status_bar(
+            down_msg=Messages.status_head,
+            speed=speed_string,
+            percentage=percentage,
+            eta=getTime(eta),
+            done=sizeUnit(sum(Transfer.down_bytes) + current),
+            left=sizeUnit(Transfer.total_down_size),
+            engine="Pyrogram 💥",
+        )
 
 async def TelegramDownload(link, num):
-    global start_time, TRANSFER_INFO
+    global start_time
     media, message = await media_Identifier(link) # type: ignore
     if media is not None:
         name = media.file_name if hasattr(  # type: ignore
