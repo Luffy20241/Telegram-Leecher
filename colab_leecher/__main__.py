@@ -20,21 +20,10 @@ src_request_msg = None
 async def start(client, message):
     await message.delete()
     text = "**Hey There, 👋🏼 It's Colab Leecher**\n\n◲ I am a Powerful File Transloading Bot 🚀\n◲ I can Transfer Files To Telegram or Your Google Drive From Various Sources 🦐"
-    keyboard = InlineKeyboardMarkup(
-        [
-            [
-                InlineKeyboardButton(
-                    "Repository 🦄",
-                    url="https://github.com/XronTrix10/Telegram-Leecher",
-                ),
-                InlineKeyboardButton("Support 💝", url="https://t.me/Colab_Leecher"),
-            ],
-        ]
-    )
     await message.reply_text(text, reply_markup=keyboard)
 
 
-@colab_bot.on_message(filters.command("tupload") & filters.private)
+@colab_bot.on_message(filters.command("l") & filters.private)
 async def telegram_upload(client, message):
     global BOT, src_request_msg
     BOT.Mode.mode = "leech"
@@ -45,7 +34,7 @@ async def telegram_upload(client, message):
     src_request_msg = await task_starter(message, text)
 
 
-@colab_bot.on_message(filters.command("gdupload") & filters.private)
+@colab_bot.on_message(filters.command("gd") & filters.private)
 async def drive_upload(client, message):
     global BOT, src_request_msg
     BOT.Mode.mode = "mirror"
@@ -56,7 +45,7 @@ async def drive_upload(client, message):
     src_request_msg = await task_starter(message, text)
 
 
-@colab_bot.on_message(filters.command("drupload") & filters.private)
+@colab_bot.on_message(filters.command("dr") & filters.private)
 async def directory_upload(client, message):
     global BOT, src_request_msg
     BOT.Mode.mode = "dir-leech"
@@ -67,7 +56,7 @@ async def directory_upload(client, message):
     src_request_msg = await task_starter(message, text)
 
 
-@colab_bot.on_message(filters.command("ytupload") & filters.private)
+@colab_bot.on_message(filters.command("yl") & filters.private)
 async def yt_upload(client, message):
     global BOT, src_request_msg
     BOT.Mode.mode = "leech"
@@ -78,7 +67,7 @@ async def yt_upload(client, message):
     src_request_msg = await task_starter(message, text)
 
 
-@colab_bot.on_message(filters.command("settings") & filters.private)
+@colab_bot.on_message(filters.command("s") & filters.private)
 async def settings(client, message):
     if message.chat.id == OWNER:
         await message.delete()
@@ -417,26 +406,7 @@ async def help_command(client, message):
     msg = await message.reply_text(
         "Send /start To Check If I am alive 🤨\n\nSend /colabxr and follow prompts to start transloading 🚀\n\nSend /settings to edit bot settings ⚙️\n\nSend /setname To Set Custom File Name 📛\n\nSend /zipaswd To Set Password For Zip File 🔐\n\nSend /unzipaswd To Set Password to Extract Archives 🔓\n\n⚠️ **You can ALWAYS SEND an image To Set it as THUMBNAIL for your files 🌄**",
         quote=True,
-        reply_markup=InlineKeyboardMarkup(
-            [
-                [
-                    InlineKeyboardButton(
-                        "Instructions 📖",
-                        url="https://github.com/XronTrix10/Telegram-Leecher/wiki/INSTRUCTIONS",
-                    ),
-                ],
-                [
-                    InlineKeyboardButton(  # Opens a web URL
-                        "Channel 📣",
-                        url="https://t.me/Colab_Leecher",
-                    ),
-                    InlineKeyboardButton(  # Opens a web URL
-                        "Group 💬",
-                        url="https://t.me/Colab_Leecher_Discuss",
-                    ),
-                ],
-            ]
-        ),
+    
     )
     await sleep(15)
     await message_deleter(message, msg)
