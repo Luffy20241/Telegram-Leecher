@@ -100,7 +100,7 @@ def YouTubeDL(url):
         "--concurrent-fragments": 8,  # Set the maximum number of concurrent fragments
         "allow_playlist_files": True,
         "overwrites": True,
-        "postprocessors": [{"key": "FFmpegVideoMerger", "preferedformat": "mp4"}],
+        "postprocessors": [{"key": "FFmpegVideoConvertor", "preferedformat": "mp4"}],
         "progress_hooks": [my_hook],
         "writesubtitles": "srt",  # Enable subtitles download
         "extractor_args": {"subtitlesformat": "srt"},  # Extract subtitles in SRT format
